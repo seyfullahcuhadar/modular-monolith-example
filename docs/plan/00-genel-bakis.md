@@ -46,5 +46,8 @@
 
 > Not: Adım 09 (host) erken bir sürümüyle adım 03'te ayağa kaldırılır, her modül eklendikçe genişletilir. 09 dosyası host'un son halini tanımlar.
 
+## İlerleme
+Güncel durum ve mimari diyagramlar: [../mimari-ve-ilerleme.md](../mimari-ve-ilerleme.md)
+
 ## Çalışma Kuralı
 Her adım sonunda: `dotnet build` hatasız, ilgili testler yeşil, adımın "Bitti Tanımı" maddeleri işaretli.
