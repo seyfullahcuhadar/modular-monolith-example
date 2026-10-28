@@ -17,7 +17,7 @@ Modular monolith'te modüller fiziksel olarak ayrı projelerdir; bu, derleyici s
   - `postgres` (port 5432, volume)
   - `seq` (port 5341 / UI 8081)
   - `api` (adım 09'da eklenecek)
-- [ ] Solution klasörleri (Rider'da düzenli görünüm için) - projeler eklendikçe adım 02'den itibaren
+- [x] Solution klasörleri (Rider'da düzenli görünüm için) - `dotnet sln add` klasör yolundan otomatik oluşturuyor
 
 ## Hedef Klasör Yapısı
 ```

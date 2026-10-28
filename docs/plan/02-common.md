@@ -6,31 +6,44 @@ Tüm modüllerin kullanacağı, **iş mantığı içermeyen** teknik yapı taşl
 ## Kavram
 Common katmanı "shared kernel" değil, teknik altyapıdır. İçine domain kavramı (ör. `Product`) koymak modülleri birbirine bağlar; bu yüzden yalnızca jenerik tipler bulunur.
 
+## Bağımlılıklar
+```mermaid
+flowchart LR
+    CommonApplication["Common.Application"] --> CommonDomain["Common.Domain"]
+    CommonInfrastructure["Common.Infrastructure"] --> CommonApplication
+    CommonPresentation["Common.Presentation"] --> CommonDomain
+```
+
 ## Yapılacaklar
 
 ### Common.Domain
-- [ ] `Entity`, `AggregateRoot` (domain event listesi ile)
-- [ ] `IDomainEvent`, `DomainEvent` (Id, OccurredOnUtc)
-- [ ] `Result`, `Result<T>`, `Error` (ErrorType: Validation, NotFound, Conflict, Failure)
+- [x] `Entity<TId>` (Id bazlı eşitlik), `AggregateRoot<TId>` + `IAggregateRoot` (domain event listesi)
+- [x] `IDomainEvent`, `DomainEvent` (Id = Guid v7, OccurredOnUtc)
+- [x] `Result`, `Result<T>`, `Error`, `ValidationError` (ErrorType: Failure, Validation, NotFound, Conflict)
 
 ### Common.Application
-- [ ] `ICommand`, `ICommand<TResponse>`, `IQuery<TResponse>`
-- [ ] `ICommandHandler<...>`, `IQueryHandler<...>`
-- [ ] Decorator'lar: `ValidationDecorator` (FluentValidation), `LoggingDecorator`
-- [ ] `IDomainEventHandler<T>`
-- [ ] `IIntegrationEvent`, `IIntegrationEventHandler<T>`, `IEventBus`
-- [ ] `IDateTimeProvider`
+- [x] `ICommand`, `ICommand<TResponse>`, `IQuery<TResponse>`
+- [x] `ICommandHandler<...>`, `IQueryHandler<...>`
+- [x] Decorator'lar: `ValidationDecorator` (FluentValidation), `LoggingDecorator` (`[LoggerMessage]` source generator)
+- [x] `IDomainEventHandler<T>` + `DomainEventHandler<T>` taban sınıfı
+- [x] `IIntegrationEvent`, `IntegrationEvent`, `IIntegrationEventHandler<T>`, `IEventBus`
+- [x] `AddApplication(params Assembly[])`: Scrutor ile `internal` handler taraması + decorator kaydı, validator kaydı
+- ~~`IDateTimeProvider`~~ yerine .NET'in yerleşik `TimeProvider`'ı kullanılıyor (testlerde `FakeTimeProvider` ile değiştirilebilir)
 
 ### Common.Infrastructure
-- [ ] `DateTimeProvider`
-- [ ] Handler + decorator kaydı için Scrutor tabanlı extension
+- [x] `AddInfrastructure()`: `TimeProvider.System` kaydı
 - [ ] (Outbox/Inbox ve EventBus adım 05'te eklenecek)
 
 ### Common.Presentation
-- [ ] `IEndpoint` arayüzü (`MapEndpoint(IEndpointRouteBuilder)`)
-- [ ] Assembly taramasıyla endpoint kaydı
-- [ ] `Result` -> `IResult` / ProblemDetails dönüştürücü
+- [x] `IEndpoint` arayüzü (`MapEndpoint(IEndpointRouteBuilder)`)
+- [x] `AddEndpoints(assemblies)` / `MapEndpoints()`: assembly taramasıyla endpoint kaydı
+- [x] `ApiResults.Problem(Result)` -> ProblemDetails, `Match` extension'ları (namespace: `Common.Presentation.Http`)
+
+## Tasarım Notları
+- Handler kaydı Infrastructure yerine Application'da: decorator'lar `internal` olduğu için kaydı aynı assembly'de yapmak, onları dışarı açmaktan daha temiz.
+- Decorator sırası: `Logging -> Validation -> Handler`. Geçersiz komut handler'a hiç ulaşmaz ama loglanır.
 
 ## Bitti Tanımı
-- Common projeleri derleniyor
-- Common.Domain hiçbir projeye bağımlı değil
+- [x] Common projeleri uyarısız derleniyor
+- [x] Common.Domain hiçbir projeye bağımlı değil
+- [x] Geçici bir konsol uygulamasıyla decorator zinciri doğrulandı (internal handler bulundu, validation handler'ı engelledi)
