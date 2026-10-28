@@ -11,14 +11,15 @@
 ## Yapılacaklar
 
 ### Catalog.Domain
-- [ ] `Product` aggregate: `Id`, `Name`, `Description`, `Price` (Money VO), `StockQuantity`
-- [ ] Davranışlar: `Create`, `ChangePrice`, `DecreaseStock` (yetersiz stokta hata)
+- [ ] `Product` aggregate: `Id`, `Name`, `Description`, `Price` (Money VO, yalnızca TRY), `StockQuantity`, `ReservedQuantity`, `AvailableQuantity`
+- [ ] Davranışlar: `Create`, `ChangePrice`, `AddStock`
+- [ ] Rezervasyon davranışları (`Reserve`, `CommitReservation`, `ReleaseReservation`) adım 06'da eklenecek
 - [ ] Domain event'ler: `ProductCreated`, `ProductPriceChanged`
 - [ ] `CatalogErrors`
 
 ### Catalog.Application
-- [ ] Command'lar: `CreateProduct`, `UpdateProductPrice`
-- [ ] Query'ler: `GetProductById`, `GetProducts` (sayfalama)
+- [ ] Command'lar: `CreateProduct`, `UpdateProductPrice`, `AddStock`
+- [ ] Query'ler: `GetProductById`, `GetProducts` (sayfalama + isim araması)
 - [ ] Validator'lar
 - [ ] `IProductRepository`, `IUnitOfWork`
 
@@ -29,15 +30,16 @@
 - [ ] `CatalogModule.AddCatalogModule(IServiceCollection, IConfiguration)`
 
 ### Catalog.PublicApi
-- [ ] `ICatalogApi`: `GetProductAsync(Guid id)` -> `ProductDto?`
+- [ ] `ICatalogApi`: `GetProductAsync(Guid id)` -> `ProductDto?` (Id, Name, Price, AvailableQuantity)
 - [ ] Implementasyon `Catalog.Infrastructure` içinde (`internal`)
 
 ### Catalog.Presentation
-- [ ] Endpoint'ler: `POST /catalog/products`, `GET /catalog/products/{id}`, `GET /catalog/products`, `PUT /catalog/products/{id}/price`
+- [ ] Endpoint'ler: `POST /catalog/products`, `GET /catalog/products/{id}`, `GET /catalog/products`, `PUT /catalog/products/{id}/price`, `POST /catalog/products/{id}/stock`
+- Detaylar ve durum kodları: [../gereksinimler.md](../gereksinimler.md#catalog-catalog)
 
 ### Api (erken sürüm)
 - [ ] Minimal `Program.cs`: modülü ekle, endpoint'leri map'le, migration uygula, OpenAPI
 
 ## Bitti Tanımı
-- Swagger/Scalar üzerinden ürün oluşturulup okunabiliyor
+- Senaryo S1 (ürün yönetimi) Scalar veya `Api.http` üzerinden çalışıyor
 - Veritabanında `catalog.products` tablosu var

@@ -15,7 +15,7 @@
 | Evrimleşebilirlik | Event bus soyut; ileride RabbitMQ ile bir modül mikroservise ayrılabilir |
 
 ## Modüller
-- **Catalog**: Ürün, fiyat, stok
+- **Catalog**: Ürün, fiyat, stok ve stok rezervasyonu
 - **Basket**: Sepet, checkout
 - **Ordering**: Sipariş ve durum makinesi
 - **Payment**: Sahte ödeme sağlayıcı
@@ -37,14 +37,17 @@
 | 03 | [03-catalog.md](03-catalog.md) | Catalog modülü + public API |
 | 04 | [04-basket.md](04-basket.md) | Basket modülü + senkron iletişim |
 | 05 | [05-outbox-inbox.md](05-outbox-inbox.md) | Event bus, Outbox, Inbox |
-| 06 | [06-ordering.md](06-ordering.md) | Ordering modülü + durum makinesi |
+| 06 | [06-ordering.md](06-ordering.md) | Ordering modülü + durum makinesi + stok rezervasyonu |
 | 07 | [07-payment.md](07-payment.md) | Payment modülü |
-| 08 | [08-notification.md](08-notification.md) | Notification modülü |
+| 08 | [08-notification.md](08-notification.md) | Notification modülü + saga kapanışı (rezervasyon kesinleştirme / telafi) |
 | 09 | [09-bootstrapper.md](09-bootstrapper.md) | Api host, cross-cutting concerns |
 | 10 | [10-testler.md](10-testler.md) | Architecture ve integration testleri |
 | 11 | [11-dokumantasyon.md](11-dokumantasyon.md) | README ve mimari kararlar (ADR) |
 
 > Not: Adım 09 (host) erken bir sürümüyle adım 03'te ayağa kaldırılır, her modül eklendikçe genişletilir. 09 dosyası host'un son halini tanımlar.
+
+## Gereksinimler
+Fonksiyonel ve fonksiyonel olmayan gereksinimler, endpoint'ler ve senaryolar: [../gereksinimler.md](../gereksinimler.md)
 
 ## İlerleme
 Güncel durum ve mimari diyagramlar: [../mimari-ve-ilerleme.md](../mimari-ve-ilerleme.md)

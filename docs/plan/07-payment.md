@@ -10,21 +10,24 @@ Dış sağlayıcı bir port (`IPaymentProvider`) arkasındadır; gerçek sağlay
 
 ### Payment.Domain
 - [ ] `Payment` aggregate (`OrderId`, `Amount`, `Status`: Pending/Succeeded/Failed, `FailureReason`)
+- [ ] Sipariş başına tek ödeme (OrderId üzerinde unique index)
 
 ### Payment.Application
-- [ ] `OrderPlacedIntegrationEventHandler` -> `ProcessPayment`
+- [ ] `OrderPaymentRequestedIntegrationEventHandler` -> `ProcessPayment`
 - [ ] `IPaymentProvider` portu
 - [ ] Query: `GetPaymentByOrderId`
 
 ### Payment.Infrastructure
-- [ ] `FakePaymentProvider`: yapılandırılabilir kural (ör. tutar > 10.000 ise reddet) - başarısız senaryoyu test etmek için
+- [ ] `FakePaymentProvider`: 10.000 TRY üzerindeki tutarları reddeder (eşik yapılandırmadan okunur). Başarısız senaryo bu kuralla üretilir
 - [ ] `PaymentDbContext` (şema: `payment`), migration
 
 ### Payment.IntegrationEvents
-- [ ] `PaymentSucceededIntegrationEvent`, `PaymentFailedIntegrationEvent`
+- [ ] `PaymentSucceededIntegrationEvent` (OrderId, PaymentId)
+- [ ] `PaymentFailedIntegrationEvent` (OrderId, Reason)
 
 ### Payment.Presentation
 - [ ] `GET /payments/{orderId}`
 
 ## Bitti Tanımı
-- Normal tutarda sipariş `Confirmed`, yüksek tutarda `Cancelled` oluyor
+- Normal tutarda sipariş `Confirmed`, 10.000 TRY üzerinde `Cancelled` oluyor
+- Stoğu rezerve edilemeyen sipariş için ödeme kaydı oluşmuyor

@@ -16,15 +16,18 @@ Modular monolith'in en büyük riski zamanla "big ball of mud"a dönüşmesidir.
 - [ ] Entity'lerin public setter'ı olmamalı
 
 ## Unit Testler (Domain)
-- [ ] `Product.DecreaseStock` yetersiz stok
+- [ ] `Product.Reserve` kullanılabilir stoktan fazlası istenirse hata; `CommitReservation` / `ReleaseReservation` sayaçları doğru güncelliyor
 - [ ] `Order` geçersiz durum geçişleri
-- [ ] `Basket` toplam hesaplama
+- [ ] `Basket` toplam hesaplama ve aynı ürünün miktar birleştirmesi
 
 ## IntegrationTests (Testcontainers + WebApplicationFactory)
+Senaryolar: [../gereksinimler.md](../gereksinimler.md#senaryolar)
 - [ ] PostgreSQL container ile host'u ayağa kaldır
-- [ ] Mutlu yol: checkout -> sipariş `Confirmed`, stok düştü, bildirim var (polling ile bekleme)
-- [ ] Başarısız ödeme: sipariş `Cancelled`, stok değişmedi
-- [ ] Idempotency: aynı event iki kez -> tek sipariş
+- [ ] S4 mutlu yol: sipariş `Confirmed`, stok düştü, rezerve 0, bildirim var (polling ile bekleme)
+- [ ] S5 ödeme reddi: sipariş `Cancelled`, rezervasyon serbest, stok değişmedi
+- [ ] S10 stok yarışı: ikinci sipariş `Cancelled`, ödeme kaydı yok
+- [ ] S7 idempotency: aynı event iki kez -> tek sipariş, tek ödeme
+- [ ] S8 tekrar deneme: ilk denemede hata fırlatan handler sonunda başarılı
 
 ## Bitti Tanımı
 - `dotnet test` tüm testler yeşil

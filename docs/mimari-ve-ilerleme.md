@@ -146,6 +146,7 @@ flowchart TB
     basket -.-> bus
     ordering -.-> bus
     payment -.-> bus
+    catalog -.-> bus
     bus -.-> ordering
     bus -.-> payment
     bus -.-> catalog
@@ -191,32 +192,59 @@ flowchart LR
 
 Kural: Bir modül başka bir modülün yalnızca `*.PublicApi` ve `*.IntegrationEvents` projelerine referans verebilir.
 
-## 6. Sipariş Akışı (Adım 04 - 08)
+## 6. Sipariş Akışı - Stok Rezervasyonlu Saga (Adım 04 - 08)
 
-Modüller birbirini doğrudan çağırmaz, event'lerle haberleşir:
+Modüller birbirini doğrudan çağırmaz, event'lerle haberleşir. Stok ödemeden önce rezerve edilir, ödeme başarısız olursa serbest bırakılır (telafi). Karar gerekçesi ve event kataloğu: [gereksinimler.md](gereksinimler.md#karar-stok-rezervasyonu-saga--telafi)
 
 ```mermaid
 sequenceDiagram
     participant Basket
     participant Ordering
-    participant Payment
     participant Catalog
+    participant Payment
     participant Notification
     Basket->>Ordering: BasketCheckedOut
-    Note over Ordering: Order = Pending
-    Ordering->>Payment: OrderPlaced
-    alt Ödeme başarılı
-        Payment->>Ordering: PaymentSucceeded
-        Note over Ordering: Order = Confirmed
-        Ordering->>Catalog: OrderConfirmed
-        Note over Catalog: Stok düşülür
-        Ordering->>Notification: OrderConfirmed
-    else Ödeme reddedildi
-        Payment->>Ordering: PaymentFailed
-        Note over Ordering: Order = Cancelled
+    Note over Ordering: Pending
+    Ordering->>Catalog: OrderPlaced
+    alt Stok yeterli
+        Note over Catalog: reserved += miktar
+        Catalog->>Ordering: StockReserved
+        Note over Ordering: StockReserved
+        Ordering->>Payment: OrderPaymentRequested
+        alt Ödeme başarılı
+            Payment->>Ordering: PaymentSucceeded
+            Note over Ordering: Confirmed
+            Ordering->>Catalog: OrderConfirmed
+            Note over Catalog: stock -= miktar, reserved -= miktar
+            Ordering->>Notification: OrderConfirmed
+        else Ödeme reddedildi
+            Payment->>Ordering: PaymentFailed
+            Note over Ordering: Cancelled
+            Ordering->>Catalog: OrderCancelled
+            Note over Catalog: "reserved -= miktar (telafi)"
+            Ordering->>Notification: OrderCancelled
+        end
+    else Stok yetersiz
+        Catalog->>Ordering: StockReservationFailed
+        Note over Ordering: Cancelled
         Ordering->>Notification: OrderCancelled
     end
 ```
+
+Sipariş durum makinesi:
+
+```mermaid
+stateDiagram-v2
+    [*] --> Pending: BasketCheckedOut
+    Pending --> StockReserved: StockReserved
+    Pending --> Cancelled: StockReservationFailed
+    StockReserved --> Confirmed: PaymentSucceeded
+    StockReserved --> Cancelled: PaymentFailed
+    Confirmed --> [*]
+    Cancelled --> [*]
+```
+
+Gereksinimler, endpoint'ler ve senaryolar: [gereksinimler.md](gereksinimler.md)
 
 ## 7. Sıradaki Adım: Catalog
 

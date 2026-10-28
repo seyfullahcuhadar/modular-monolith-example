@@ -15,6 +15,7 @@ Projeyi, kitaptaki kavramlarla ilişkilendiren bir öğrenme kaynağına dönü�
   - ADR-003: Outbox/Inbox ile asenkron iletişim
   - ADR-004: Kendi CQRS soyutlamamız (MediatR yerine)
   - ADR-005: Architecture testleriyle sınır koruması
+  - ADR-006: Ödemeden önce stok rezervasyonu (choreography saga + telafi)
 - [ ] `docs/modulu-mikroservise-ayirma.md`: Payment modülünü ayırmak için gereken adımlar (event bus -> RabbitMQ, PublicApi -> HTTP client)
 
 ## Bitti Tanımı
