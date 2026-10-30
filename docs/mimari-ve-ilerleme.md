@@ -2,16 +2,16 @@
 
 Bu doküman projenin şu anki durumunu ve hedeflenen mimariyi diyagramlarla özetler. Her adım tamamlandıkça güncellenir.
 
-**Durum:** 11 adımın 2'si tamamlandı. İskelet ve ortak yapı taşları hazır, modüller henüz yok.
+**Durum:** 11 adımın 4'ü tamamlandı. Catalog ve Basket ayakta; senkron iletişim `ICatalogApi` üzerinden çalışıyor.
 
 ## 1. Yol Haritası
 
 ```mermaid
 flowchart LR
     s01["01 İskelet - TAMAM"] --> s02["02 Common - TAMAM"]
-    s02 --> s03["03 Catalog + ilk host - SIRADAKİ"]
-    s03 --> s04["04 Basket"]
-    s04 --> s05["05 Outbox / Inbox"]
+    s02 --> s03["03 Catalog + ilk host - TAMAM"]
+    s03 --> s04["04 Basket - TAMAM"]
+    s04 --> s05["05 Outbox / Inbox - SIRADAKİ"]
     s05 --> s06["06 Ordering"]
     s06 --> s07["07 Payment"]
     s07 --> s08["08 Notification"]
@@ -96,7 +96,7 @@ classDiagram
 |---|---|
 | `Common.Domain` | `Entity`, `AggregateRoot`, `DomainEvent`, `Result`, `Error` |
 | `Common.Application` | Command/query/handler arayüzleri, `IEventBus`, decorator'lar, `AddApplication()` |
-| `Common.Infrastructure` | `AddInfrastructure()` (şimdilik `TimeProvider`); Outbox/Inbox adım 05'te |
+| `Common.Infrastructure` | `AddInfrastructure()` (`TimeProvider`), `AddModuleDbContext()`, `ApplyModuleMigrationsAsync()`; Outbox/Inbox adım 05'te |
 | `Common.Presentation` | `IEndpoint`, `ApiResults`, `Match` extension'ları |
 
 ## 3. Bir İstek Handler'a Nasıl Ulaşıyor
@@ -246,9 +246,9 @@ stateDiagram-v2
 
 Gereksinimler, endpoint'ler ve senaryolar: [gereksinimler.md](gereksinimler.md)
 
-## 7. Sıradaki Adım: Catalog
+## 7. Catalog Modülü (Adım 03 - Tamamlandı)
 
-Adım 03 sonunda uygulama ilk kez `dotnet run` ile çalışacak.
+Uygulama ilk kez `dotnet run` ile çalışıyor; S1 senaryosu `Api.http` ile doğrulandı.
 
 ```mermaid
 flowchart LR
@@ -256,7 +256,34 @@ flowchart LR
     ep --> h["CreateProductHandler - Logging ve Validation ile"]
     h --> agg["Product aggregate"]
     h --> repo["ProductRepository"]
+    get["GetProductByIdHandler"] --> repo
     repo --> ctx["CatalogDbContext"]
     ctx --> tbl["catalog.products tablosu"]
-    pub["ICatalogApi - Basket için"] -.-> ctx
+    pub["ICatalogApi"] --> get
 ```
+
+## 8. Basket ve Senkron Sınır (Adım 04 - Tamamlandı)
+
+Basket, Catalog'un tablosuna dokunmaz. Ürün bilgisi yalnızca `ICatalogApi` ile istenir; fiyat sepete **snapshot** olarak yazılır.
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Basket
+    participant CatalogApi as ICatalogApi
+    participant Catalog
+    Client->>Basket: POST /basket/{id}/items
+    Basket->>CatalogApi: GetProductAsync(productId)
+    CatalogApi->>Catalog: GetProductById query
+    Catalog-->>Basket: ProductDto (name, price, available)
+    alt Ürün yok
+        Basket-->>Client: 404
+    else Stok yetersiz
+        Basket-->>Client: 409
+    else Uygun
+        Note over Basket: Satır yoksa ekle, varsa miktarı artır. Fiyatı değiştirme.
+        Basket-->>Client: 204
+    end
+```
+
+S2, S3 ve S6 `Api.http` ile doğrulandı. Checkout `BasketCheckedOut` domain event'ini üretir ama henüz yayınlamaz; bu adım 05'te Outbox'a bağlanacak.

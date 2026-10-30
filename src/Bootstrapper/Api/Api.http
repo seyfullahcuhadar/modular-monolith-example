@@ -1,0 +1,149 @@
+@Api = http://localhost:5080
+
+### S1 - Ürün oluştur (201 + Location)
+# @name createProduct
+POST {{Api}}/catalog/products
+Content-Type: application/json
+
+{
+  "name": "Kalem",
+  "description": "Mavi tükenmez kalem",
+  "price": 100,
+  "stockQuantity": 5
+}
+
+###
+@productId = {{createProduct.response.body.id}}
+
+### S1 - Id ile getir (200)
+GET {{Api}}/catalog/products/{{productId}}
+
+### S1 - Fiyat değiştir (204)
+PUT {{Api}}/catalog/products/{{productId}}/price
+Content-Type: application/json
+
+{
+  "price": 150
+}
+
+### S1 - Stok ekle (204)
+POST {{Api}}/catalog/products/{{productId}}/stock
+Content-Type: application/json
+
+{
+  "quantity": 10
+}
+
+### S1 - Güncel fiyat ve stokla getir (200: price 150, stockQuantity 15)
+GET {{Api}}/catalog/products/{{productId}}
+
+### S1 - Listele, isimle ara (200)
+GET {{Api}}/catalog/products?page=1&pageSize=20&search=kal
+
+### S1 hata - Negatif fiyat (400)
+POST {{Api}}/catalog/products
+Content-Type: application/json
+
+{
+  "name": "Silgi",
+  "description": "",
+  "price": -5,
+  "stockQuantity": 1
+}
+
+### S1 hata - Olmayan ürün (404)
+GET {{Api}}/catalog/products/00000000-0000-0000-0000-000000000001
+
+### S1 hata - Geçersiz sayfa boyutu (400)
+GET {{Api}}/catalog/products?pageSize=500
+
+### S2 - Stoğu 5, fiyatı 100 TRY olan ürün
+# @name createBasketProduct
+POST {{Api}}/catalog/products
+Content-Type: application/json
+
+{
+  "name": "Kalem",
+  "description": "Sepet senaryosu için",
+  "price": 100,
+  "stockQuantity": 5
+}
+
+###
+@basketProductId = {{createBasketProduct.response.body.id}}
+@customerId = 11111111-1111-1111-1111-111111111111
+
+### S2 - Boş sepet (200, items [])
+GET {{Api}}/basket/{{customerId}}
+
+### S2 - Sepete 2 adet ekle (204)
+POST {{Api}}/basket/{{customerId}}/items
+Content-Type: application/json
+
+{
+  "productId": "{{basketProductId}}",
+  "quantity": 2
+}
+
+### S2 - Aynı üründen 2 adet daha ekle (204, tek satır miktar 4)
+POST {{Api}}/basket/{{customerId}}/items
+Content-Type: application/json
+
+{
+  "productId": "{{basketProductId}}",
+  "quantity": 2
+}
+
+### S2 - Sepeti gör (200: quantity 4, unitPrice 100)
+GET {{Api}}/basket/{{customerId}}
+
+### S2 hata - Olmayan ürün (404)
+POST {{Api}}/basket/{{customerId}}/items
+Content-Type: application/json
+
+{
+  "productId": "00000000-0000-0000-0000-000000000001",
+  "quantity": 1
+}
+
+### S2 hata - Toplam 6 adet (4+2) stoğu 5'i aşar (409)
+POST {{Api}}/basket/{{customerId}}/items
+Content-Type: application/json
+
+{
+  "productId": "{{basketProductId}}",
+  "quantity": 2
+}
+
+### S2 hata - Miktar 0 (400)
+POST {{Api}}/basket/{{customerId}}/items
+Content-Type: application/json
+
+{
+  "productId": "{{basketProductId}}",
+  "quantity": 0
+}
+
+### S3 - Ürün fiyatını 150 yap
+PUT {{Api}}/catalog/products/{{basketProductId}}/price
+Content-Type: application/json
+
+{
+  "price": 150
+}
+
+### S3 - Sepeti gör (unitPrice hâlâ 100)
+GET {{Api}}/basket/{{customerId}}
+
+### S6 - Boş sepetle checkout (409)
+POST {{Api}}/basket/00000000-0000-0000-0000-000000000002/checkout
+
+### Checkout (202 + orderId + Location)
+# @name checkout
+POST {{Api}}/basket/{{customerId}}/checkout
+
+### Checkout sonrası sepet boş
+GET {{Api}}/basket/{{customerId}}
+
+### Sepetten ürün çıkar (404, sepet boş)
+DELETE {{Api}}/basket/{{customerId}}/items/{{basketProductId}}

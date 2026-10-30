@@ -38,9 +38,25 @@ internal static class ValidationDecorator
         }
     }
 
-    private static async Task<ValidationError?> ValidateAsync<TCommand>(
-        TCommand command,
-        IEnumerable<IValidator<TCommand>> validators,
+    internal sealed class QueryHandler<TQuery, TResponse>(
+        IQueryHandler<TQuery, TResponse> innerHandler,
+        IEnumerable<IValidator<TQuery>> validators)
+        : IQueryHandler<TQuery, TResponse>
+        where TQuery : IQuery<TResponse>
+    {
+        public async Task<Result<TResponse>> Handle(TQuery query, CancellationToken cancellationToken)
+        {
+            var validationError = await ValidateAsync(query, validators, cancellationToken);
+
+            return validationError is null
+                ? await innerHandler.Handle(query, cancellationToken)
+                : Result.Failure<TResponse>(validationError);
+        }
+    }
+
+    private static async Task<ValidationError?> ValidateAsync<TRequest>(
+        TRequest request,
+        IEnumerable<IValidator<TRequest>> validators,
         CancellationToken cancellationToken)
     {
         var validatorArray = validators.ToArray();
@@ -49,7 +65,7 @@ internal static class ValidationDecorator
             return null;
         }
 
-        var context = new ValidationContext<TCommand>(command);
+        var context = new ValidationContext<TRequest>(request);
         var results = await Task.WhenAll(validatorArray.Select(v => v.ValidateAsync(context, cancellationToken)));
 
         var errors = results
